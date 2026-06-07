@@ -9,14 +9,26 @@
     <button id="save-current" class="primary">➕ 保存当前账号</button>
     <button id="add-account" class="secondary">➕ 添加新账号(去登录页)</button>
     <div id="add-confirm"></div>
-    <label class="toggle">
-      <input type="checkbox" id="keep-feed" />
-      <span>切换后把原首页视频塞回新页面前几个卡片(实验性)</span>
-    </label>
     <p class="warn">⚠️ 切换 / 添加账号请用本插件,<b>不要点 B 站的“退出登录”</b>——那会让该账号在服务端失效,之后切回去会变成未登录。</p>
   </header>
   <ul id="account-list"></ul>
   <div id="status"></div>
+  <footer class="footer">
+    <button id="settings-toggle" class="gear" title="设置" aria-label="设置">⚙</button>
+  </footer>
+
+  <div id="settings-panel" class="settings-panel" hidden>
+    <div class="settings-title">设置</div>
+    <label class="switch-row" id="row-auto-reload">
+      <span class="label">切换后自动刷新页面</span>
+      <span class="switch"><input type="checkbox" id="auto-reload" /><span class="slider"></span></span>
+    </label>
+    <label class="switch-row" id="row-keep-feed">
+      <span class="label">切换后保留主页推荐(实验性)</span>
+      <span class="switch"><input type="checkbox" id="keep-feed" /><span class="slider"></span></span>
+    </label>
+  </div>
+
   <script type="module" src="popup.js"></script>
 </body>
 </html>

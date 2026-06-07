@@ -195,3 +195,12 @@ bilibili 的深/浅色偏好存在 `theme_style`(及 `theme-*` 提示标记)cook
 
 - **首次切换不生效**:重新加载扩展后,已打开的标签页里没有内容脚本,首次切换抓取失败。新增后台 service worker(`src/background.js`),在 `onInstalled`/`onStartup` 时用 `chrome.scripting.executeScript` 把内容脚本注入到已打开的 B 站标签(新增 `scripting` 权限)。内容脚本加 `window.__basContentInit` 防重复注入。
 - **切换后手动刷新仍被覆盖**:原 MutationObserver 盯 12s、期间任何变化都重塞,导致"换一换"/刷新的新推荐被反复覆盖。改为**只在首次成功替换后再盯 2.5s**(扛过 React 注水)即彻底停手;手动 F5 会消费掉 `pendingFeedRestore` 标记、本就不会再恢复。
+
+## 14. 弹窗 UI 微调(2026-06-07,v0.2.3)
+
+- **账号行高收紧**:行高贴着头像(34px + 上下 5px),不再被竖排按钮撑高。
+- **操作按钮悬停显现**:`切换/改名/删除` 改为绝对定位、默认隐藏,鼠标悬停该行(或处于改名/确认删除态)时才显示,不占行高、不挤压信息。
+- **新增"切换后自动刷新页面"开关**(`settings.autoReloadOnSwitch`,默认开)。关闭时 `handleSwitch` 跳过 `reloadBilibiliTabs`;此时不刷新,页面本就保留,故"保留主页推荐"无意义并被置灰。
+- **两个开关改为滑动开关样式**(纯 CSS,`input[type=checkbox] + .slider`)。
+- **设置收纳到齿轮**:弹窗右下角齿轮 ⚙ 打开设置面板,两个开关都在里面;点面板外关闭。
+- "保留主页推荐"开关文案精简为「切换后保留主页推荐(实验性)」。

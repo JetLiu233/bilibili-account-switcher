@@ -30,6 +30,7 @@ button.secondary {
 }
 button.danger { color: #e54848; }
 button.go { background: #00aeec; color: #fff; border: none; }
+
 .warn {
   margin: 8px 0 0;
   padding: 6px 8px;
@@ -52,37 +53,102 @@ button.go { background: #00aeec; color: #fff; border: none; }
   font-size: 12px;
 }
 .confirm-bar .msg { flex: 1; line-height: 1.4; }
-.toggle {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  margin-top: 8px;
-  font-size: 11px;
-  color: #61666d;
-  line-height: 1.4;
-  cursor: pointer;
-}
-.toggle input { margin-top: 1px; flex-shrink: 0; }
+
+/* 账号列表:行高贴着头像,只比头像上下多一点 */
 ul { list-style: none; margin: 0; padding: 0 10px; }
 li.account {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 5px 8px;
   background: #fff;
   border: 1px solid #e3e5e7;
   border-radius: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 li.account.active { border-color: #00aeec; box-shadow: 0 0 0 1px #00aeec; }
 li.empty { color: #999; text-align: center; padding: 16px; }
 .avatar {
-  width: 36px; height: 36px; border-radius: 50%;
+  width: 34px; height: 34px; border-radius: 50%;
   object-fit: cover; background: #eee; flex-shrink: 0;
 }
 .info { flex: 1; min-width: 0; }
 .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .meta { color: #999; font-size: 11px; }
-.actions { display: flex; flex-direction: column; gap: 4px; }
+
+/* 操作按钮:绝对定位、默认隐藏,悬停/改名/确认删除时才显现 */
+.actions {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  gap: 4px;
+  padding: 2px 4px;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: -10px 0 10px 6px #fff; /* 左侧白色渐隐,避免硬切到文字 */
+}
+li.account:hover .actions,
+li.account.editing .actions,
+li.account.confirming .actions { display: flex; }
+li.account.editing .info { padding-right: 84px; }
 .rename-input { width: 100%; box-sizing: border-box; padding: 4px; }
-#status { padding: 0 10px 10px; color: #00aeec; min-height: 16px; }
+
+#status { padding: 0 10px 6px; color: #00aeec; min-height: 16px; }
+
+/* 底部设置入口 */
+.footer { display: flex; justify-content: flex-end; padding: 2px 10px 10px; }
+.gear {
+  width: 30px; height: 30px; padding: 0;
+  border-radius: 50%;
+  font-size: 15px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  color: #61666d;
+}
+.gear:hover { color: #00aeec; border-color: #00aeec; }
+
+.settings-panel {
+  position: fixed;
+  right: 10px;
+  bottom: 46px;
+  width: 248px;
+  background: #fff;
+  border: 1px solid #e3e5e7;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  padding: 4px 12px 8px;
+  z-index: 20;
+}
+.settings-panel[hidden] { display: none; }
+.settings-title { font-weight: 600; margin: 8px 0 2px; color: #18191c; }
+
+/* 滑动开关 */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 0;
+  font-size: 12px;
+  color: #61666d;
+  border-top: 1px solid #f1f2f3;
+  cursor: pointer;
+}
+.switch-row .label { flex: 1; line-height: 1.3; }
+.switch-row.disabled { opacity: 0.5; }
+.switch { position: relative; display: inline-block; width: 38px; height: 22px; flex-shrink: 0; }
+.switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; inset: 0; cursor: pointer;
+  background: #ccd0d7; border-radius: 22px; transition: 0.2s;
+}
+.slider::before {
+  content: ""; position: absolute;
+  width: 18px; height: 18px; left: 2px; top: 2px;
+  background: #fff; border-radius: 50%; transition: 0.2s;
+}
+.switch input:checked + .slider { background: #00aeec; }
+.switch input:checked + .slider::before { transform: translateX(16px); }
+.switch input:disabled + .slider { cursor: not-allowed; }

@@ -17,7 +17,11 @@ import { loadSettings, saveSettings } from "./settingsStore.js";
 const listEl = document.getElementById("account-list");
 const statusEl = document.getElementById("status");
 const addConfirmEl = document.getElementById("add-confirm");
+const autoReloadEl = document.getElementById("auto-reload");
 const keepFeedEl = document.getElementById("keep-feed");
+const rowKeepFeed = document.getElementById("row-keep-feed");
+const settingsToggle = document.getElementById("settings-toggle");
+const settingsPanel = document.getElementById("settings-panel");
 
 // 行内编辑状态
 let editingUid = null;
@@ -61,7 +65,10 @@ async function openLoginPage() {
 
 function renderRow(acc, currentUid) {
   const li = document.createElement("li");
-  li.className = "account" + (acc.uid === currentUid ? " active" : "");
+  let cls = "account" + (acc.uid === currentUid ? " active" : "");
+  if (editingUid === acc.uid) cls += " editing";
+  else if (confirmDeleteUid === acc.uid) cls += " confirming";
+  li.className = cls;
 
   const avatar = document.createElement("img");
   avatar.className = "avatar";
@@ -178,9 +185,11 @@ async function handleSwitch(uid) {
   if (!acc) return;
   setStatus(`正在切换到 ${acc.name}…`);
 
-  // 开关打开时,先抓住当前首页的视频,刷新后由内容脚本替换回去
   const settings = await loadSettings();
-  const feedVideos = settings.keepFeedOnSwitch ? await grabActiveFeed() : null;
+  const willReload = settings.autoReloadOnSwitch;
+  // 仅在会刷新时才需要抓取并恢复首页视频(不刷新的话页面本就保留)
+  const feedVideos =
+    willReload && settings.keepFeedOnSwitch ? await grabActiveFeed() : null;
 
   const result = await applyAccountCookies(acc.cookies);
 
@@ -190,12 +199,12 @@ async function handleSwitch(uid) {
     });
   }
 
-  await reloadBilibiliTabs();
-  setStatus(
-    result.failed
-      ? `已切换(${result.failed}/${result.total} 条 cookie 失败)`
-      : `已切换到 ${acc.name}`
-  );
+  if (willReload) await reloadBilibiliTabs();
+
+  const base = result.failed
+    ? `已切换(${result.failed}/${result.total} 条 cookie 失败)`
+    : `已切换到 ${acc.name}`;
+  setStatus(willReload ? base : `${base}(未刷新)`);
   await render();
 }
 
@@ -246,13 +255,45 @@ async function commitDelete(uid) {
   await render();
 }
 
-async function initSettings() {
-  const s = await loadSettings();
-  keepFeedEl.checked = !!s.keepFeedOnSwitch;
+// 保留主页推荐依赖刷新,关闭自动刷新时该开关无意义,置灰
+function syncKeepFeedEnabled() {
+  keepFeedEl.disabled = !autoReloadEl.checked;
+  rowKeepFeed.classList.toggle("disabled", !autoReloadEl.checked);
 }
 
-keepFeedEl.addEventListener("change", () => {
-  saveSettings({ keepFeedOnSwitch: keepFeedEl.checked });
+async function persistSettings() {
+  await saveSettings({
+    autoReloadOnSwitch: autoReloadEl.checked,
+    keepFeedOnSwitch: keepFeedEl.checked,
+  });
+}
+
+async function initSettings() {
+  const s = await loadSettings();
+  autoReloadEl.checked = !!s.autoReloadOnSwitch;
+  keepFeedEl.checked = !!s.keepFeedOnSwitch;
+  syncKeepFeedEnabled();
+}
+
+autoReloadEl.addEventListener("change", () => {
+  syncKeepFeedEnabled();
+  persistSettings();
+});
+keepFeedEl.addEventListener("change", persistSettings);
+
+// 齿轮:开/关设置面板,点面板外关闭
+settingsToggle.addEventListener("click", (e) => {
+  e.stopPropagation();
+  settingsPanel.hidden = !settingsPanel.hidden;
+});
+document.addEventListener("click", (e) => {
+  if (
+    !settingsPanel.hidden &&
+    !settingsPanel.contains(e.target) &&
+    e.target !== settingsToggle
+  ) {
+    settingsPanel.hidden = true;
+  }
 });
 
 document.getElementById("save-current").addEventListener("click", handleSaveCurrent);
