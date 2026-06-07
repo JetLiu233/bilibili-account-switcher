@@ -13,9 +13,14 @@
 (function () {
   "use strict";
 
+  // 防重复注入:声明式注入 + 后台手动注入可能都来一次
+  if (window.__basContentInit) return;
+  window.__basContentInit = true;
+
   const FEED_LIMIT = 6;
   const RESTORE_MAX_AGE_MS = 60 * 1000;
-  const RESTORE_WATCH_MS = 12 * 1000;
+  const RESTORE_STABILIZE_MS = 2500; // 首次成功替换后再盯这么久以扛过 React 注水,然后彻底停手
+  const RESTORE_GIVEUP_MS = 12 * 1000; // 一直没出现卡片就放弃
   const CARD_SELECTOR = ".bili-video-card, .bili-feed-card";
 
   function parseBvId(url) {
@@ -123,18 +128,34 @@
     return applied > 0;
   }
 
-  // 等卡片渲染出来后恢复,并在 RESTORE_WATCH_MS 内盯着 React 重渲染、被覆盖就重塞。
+  // 等卡片渲染出来后替换一次;首次成功后只再盯 RESTORE_STABILIZE_MS 扛过 React 注水,
+  // 然后彻底停手——这样切换后用户很快就能自由"换一换"/刷新看新推荐,不会被一直覆盖。
   function scheduleRestore(videos) {
-    const deadline = Date.now() + RESTORE_WATCH_MS;
+    const start = Date.now();
+    let firstApplyAt = 0;
     let pending = null;
-    restore(videos);
-    const obs = new MutationObserver(() => {
-      if (Date.now() > deadline) { obs.disconnect(); return; }
+    let obs = null;
+
+    const stop = () => {
+      if (obs) { obs.disconnect(); obs = null; }
+      if (pending) { clearTimeout(pending); pending = null; }
+    };
+
+    const tick = () => {
+      if (restore(videos) && !firstApplyAt) firstApplyAt = Date.now();
+    };
+
+    tick();
+
+    obs = new MutationObserver(() => {
+      const now = Date.now();
+      if (now - start > RESTORE_GIVEUP_MS) return stop();
+      if (firstApplyAt && now - firstApplyAt > RESTORE_STABILIZE_MS) return stop();
       if (pending) return;
-      pending = setTimeout(() => { pending = null; restore(videos); }, 300);
+      pending = setTimeout(() => { pending = null; tick(); }, 200);
     });
     obs.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => obs.disconnect(), RESTORE_WATCH_MS);
+    setTimeout(stop, RESTORE_GIVEUP_MS);
   }
 
   // 1) 抓取请求

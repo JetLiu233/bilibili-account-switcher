@@ -190,3 +190,8 @@ bilibili 的深/浅色偏好存在 `theme_style`(及 `theme-*` 提示标记)cook
 - `collectCards` 同时按 **BV 和卡片元素双重去重**,避免同卡片的封面链接 + 标题链接被收两次。
 - 封面是 `<picture>`,内有 `<source srcset>`(avif/webp)**优先于 `<img>`**;替换封面时必须先删 `<source>`,只改 `img.src` 不显示。
 - 标题在 `<h3 class="bili-video-card__info--tit"><a>…</a></h3>`,替换时保留内层 `<a>`、只改文字。
+
+**v0.2.2 修复**:
+
+- **首次切换不生效**:重新加载扩展后,已打开的标签页里没有内容脚本,首次切换抓取失败。新增后台 service worker(`src/background.js`),在 `onInstalled`/`onStartup` 时用 `chrome.scripting.executeScript` 把内容脚本注入到已打开的 B 站标签(新增 `scripting` 权限)。内容脚本加 `window.__basContentInit` 防重复注入。
+- **切换后手动刷新仍被覆盖**:原 MutationObserver 盯 12s、期间任何变化都重塞,导致"换一换"/刷新的新推荐被反复覆盖。改为**只在首次成功替换后再盯 2.5s**(扛过 React 注水)即彻底停手;手动 F5 会消费掉 `pendingFeedRestore` 标记、本就不会再恢复。
