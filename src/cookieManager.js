@@ -43,3 +43,40 @@ export function cookieToSetDetails(cookie) {
   }
   return details;
 }
+
+// ——— 以下为 Chrome API 包装层,运行时使用,手动验收 ———
+
+export async function captureCurrentCookies() {
+  const cookies = await chrome.cookies.getAll({ domain: "bilibili.com" });
+  return cookies.map(pickStoredFields);
+}
+
+export async function getCurrentUid() {
+  const c = await chrome.cookies.get({
+    url: "https://www.bilibili.com",
+    name: "DedeUserID",
+  });
+  return c ? c.value : null;
+}
+
+export async function applyAccountCookies(savedCookies) {
+  // 1. 删除当前所有 bilibili cookie,避免两个账号混在一起
+  const current = await chrome.cookies.getAll({ domain: "bilibili.com" });
+  for (const c of current) {
+    try {
+      await chrome.cookies.remove(cookieToRemoveDetails(c));
+    } catch (e) {
+      // 单条失败不中断
+    }
+  }
+  // 2. 写回目标账号的 cookie,统计失败数
+  let failed = 0;
+  for (const c of savedCookies) {
+    try {
+      await chrome.cookies.set(cookieToSetDetails(c));
+    } catch (e) {
+      failed++;
+    }
+  }
+  return { failed, total: savedCookies.length };
+}
