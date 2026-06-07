@@ -17,3 +17,14 @@ export function removeAccount(accounts, uid) {
 export function renameAccount(accounts, uid, name) {
   return accounts.map((a) => (a.uid === uid ? { ...a, name } : a));
 }
+
+// ——— Chrome storage 包装层,手动验收 ———
+
+export async function loadAccounts() {
+  const data = await chrome.storage.local.get("accounts");
+  return Array.isArray(data.accounts) ? data.accounts : [];
+}
+
+export async function saveAccounts(accounts) {
+  await chrome.storage.local.set({ accounts });
+}
