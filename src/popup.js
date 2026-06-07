@@ -12,10 +12,12 @@ import {
   renameAccount,
 } from "./accountStore.js";
 import { fetchProfile } from "./bilibiliApi.js";
+import { loadSettings, saveSettings } from "./settingsStore.js";
 
 const listEl = document.getElementById("account-list");
 const statusEl = document.getElementById("status");
 const addConfirmEl = document.getElementById("add-confirm");
+const keepFeedEl = document.getElementById("keep-feed");
 
 // 行内编辑状态
 let editingUid = null;
@@ -158,12 +160,36 @@ async function handleSaveCurrent() {
   await render();
 }
 
+// 实验性:抓取当前首页前 N 个视频,失败/非首页返回 null。
+async function grabActiveFeed() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.url || !/:\/\/www\.bilibili\.com\//.test(tab.url)) return null;
+    const resp = await chrome.tabs.sendMessage(tab.id, { type: "GRAB_FEED", limit: 6 });
+    return resp && Array.isArray(resp.videos) && resp.videos.length ? resp.videos : null;
+  } catch (e) {
+    return null; // 内容脚本未就绪 / 非首页
+  }
+}
+
 async function handleSwitch(uid) {
   const accounts = await loadAccounts();
   const acc = accounts.find((a) => a.uid === uid);
   if (!acc) return;
   setStatus(`正在切换到 ${acc.name}…`);
+
+  // 开关打开时,先抓住当前首页的视频,刷新后由内容脚本替换回去
+  const settings = await loadSettings();
+  const feedVideos = settings.keepFeedOnSwitch ? await grabActiveFeed() : null;
+
   const result = await applyAccountCookies(acc.cookies);
+
+  if (feedVideos) {
+    await chrome.storage.local.set({
+      pendingFeedRestore: { videos: feedVideos, ts: Date.now() },
+    });
+  }
+
   await reloadBilibiliTabs();
   setStatus(
     result.failed
@@ -220,6 +246,16 @@ async function commitDelete(uid) {
   await render();
 }
 
+async function initSettings() {
+  const s = await loadSettings();
+  keepFeedEl.checked = !!s.keepFeedOnSwitch;
+}
+
+keepFeedEl.addEventListener("change", () => {
+  saveSettings({ keepFeedOnSwitch: keepFeedEl.checked });
+});
+
 document.getElementById("save-current").addEventListener("click", handleSaveCurrent);
 document.getElementById("add-account").addEventListener("click", handleAddAccount);
+initSettings();
 render();

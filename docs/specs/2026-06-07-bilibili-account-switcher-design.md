@@ -167,3 +167,19 @@ bilibili 的深/浅色偏好存在 `theme_style`(及 `theme-*` 提示标记)cook
 **调整**:把主题当成全局偏好——`applyAccountCookies` 在清空前先抓取当前 `theme*` cookie(`isThemeCookie()` 判定),写回目标账号后再用它们覆盖,使深/浅色设置跨账号沿用,不跟随各账号快照。`isThemeCookie` 为纯函数,有单元测试。
 
 **已知边界**:此修复假设主题由 cookie 驱动(与实测 cookie dump 一致)。若 bilibili 某些场景改用 localStorage 存主题,则需改用 content script 方案;目前未发现该需求。
+
+## 13. 实验性:切换后保留首页视频(2026-06-07)
+
+**需求**:在首页看到想看的视频,切换账号后页面刷新、视频流变成另一批,原视频丢失。希望切换后仍能在页面上看到切换前的那几个视频,并用新账号打开。
+
+**取舍**:首页推荐每次加载随机,无法"穿过刷新"保留原始信息流。用户选择"替换 B 站原生的前 N 个卡片"这一最直观但最脆弱的呈现方式(已知会被 React 重渲染清掉、改版即失效)。
+
+**架构**(不新增 `scripting` 权限,改用内容脚本):
+
+- 新增内容脚本 `src/content.js`,`content_scripts` 匹配 `*://www.bilibili.com/*`,`run_at: document_idle`。经典脚本、自包含(内容脚本不支持 ES import)。
+- 抓取:弹窗 `handleSwitch` 在切换前,若开关开启且当前是 www.bilibili.com,向该标签的内容脚本发 `GRAB_FEED` 消息,读取前 N 个(N=6)视频的链接/标题/封面。用通用选择器 `a[href*="/video/BV"]` 定位,尽量不绑死类名。
+- 传递:切换 cookie 后把 `{videos, ts}` 写入 `chrome.storage.local.pendingFeedRestore`,然后刷新。
+- 恢复:刷新后内容脚本读取该标记(消费一次即清,>60s 视为过期),等卡片渲染出来,把保存的视频替换进前 N 个原生卡片(改 `href`/`target`/封面 `img`/标题),并在 12s 内用 MutationObserver 盯着 React 重渲染、被覆盖就重塞。
+- 开关:`settingsStore.js` 管理 `settings.keepFeedOnSwitch`,**默认关**(实验性、且会改写页面 DOM)。`withDefaults` 为纯函数,有单元测试。
+
+**已知脆弱点**:抓取与替换都依赖 B 站首页 DOM;B 站改版可能失效。替换后的卡片上播放量/时长等数字仍是原卡片的(只换了链接/标题/封面)。这些是该呈现方式的固有代价。
