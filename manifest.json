@@ -5,8 +5,20 @@
   "description": "在多个 bilibili 账号之间一键切换",
   "permissions": ["cookies", "storage"],
   "host_permissions": ["*://*.bilibili.com/*"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "action": {
     "default_popup": "src/popup.html",
-    "default_title": "Bilibili 账号切换"
+    "default_title": "Bilibili 账号切换",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   }
 }
