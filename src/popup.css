@@ -28,6 +28,9 @@ button.secondary {
   padding: 8px;
   font-size: 13px;
 }
+/* 保存 / 添加 两个按钮并排,各占一半 */
+.btn-row { display: flex; gap: 8px; }
+.btn-row button { flex: 1; width: auto; margin: 0; }
 button.danger { color: #e54848; }
 button.go { background: #00aeec; color: #fff; border: none; }
 

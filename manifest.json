@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bilibili 账号快捷切换",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "在多个 bilibili 账号之间一键切换",
   "permissions": ["cookies", "storage", "scripting"],
   "host_permissions": ["*://*.bilibili.com/*"],
