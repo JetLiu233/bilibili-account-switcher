@@ -44,6 +44,12 @@ export function cookieToSetDetails(cookie) {
   return details;
 }
 
+// bilibili 的深/浅色等主题偏好存在 theme_style / theme-* cookie 里。
+// 切换账号时这些被当成"全局偏好"沿用,而不是跟着各账号快照走。
+export function isThemeCookie(name) {
+  return typeof name === "string" && name.toLowerCase().startsWith("theme");
+}
+
 // ——— 以下为 Chrome API 包装层,运行时使用,手动验收 ———
 
 export async function captureCurrentCookies() {
@@ -74,8 +80,13 @@ export async function clearBilibiliCookies() {
 }
 
 export async function applyAccountCookies(savedCookies) {
+  // 0. 记下当前的主题 cookie,切换后沿用上一次的深/浅色设置
+  const current = await chrome.cookies.getAll({ domain: "bilibili.com" });
+  const themeCookies = current.filter((c) => isThemeCookie(c.name));
+
   // 1. 本地清空当前所有 bilibili cookie,避免两个账号混在一起
   await clearBilibiliCookies();
+
   // 2. 写回目标账号的 cookie,统计失败数
   let failed = 0;
   for (const c of savedCookies) {
@@ -85,5 +96,15 @@ export async function applyAccountCookies(savedCookies) {
       failed++;
     }
   }
+
+  // 3. 用切换前的主题 cookie 覆盖快照里的旧值,让深/浅色跨账号保持
+  for (const c of themeCookies) {
+    try {
+      await chrome.cookies.set(cookieToSetDetails(c));
+    } catch (e) {
+      // 主题恢复失败不影响账号切换本身
+    }
+  }
+
   return { failed, total: savedCookies.length };
 }

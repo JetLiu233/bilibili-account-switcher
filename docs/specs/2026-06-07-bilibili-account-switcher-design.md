@@ -159,3 +159,11 @@ nav 接口调用:从弹窗(扩展页面)`fetch("https://api.bilibili.com/x/web-i
 - 界面常驻警告 + README 说明:不要点 B 站的"退出登录"。
 
 **不可恢复性**:一旦某账号已被"退出登录"作废,本地无法复活,只能经"添加新账号"流程重新登录、重新保存。
+
+## 12. 主题(深/浅色)跨账号保持(2026-06-07)
+
+bilibili 的深/浅色偏好存在 `theme_style`(及 `theme-*` 提示标记)cookie 里。原始切换逻辑会清空全部 cookie 再写回目标账号快照,导致主题被快照里的旧值覆盖(常表现为每次切换都回到浅色)。
+
+**调整**:把主题当成全局偏好——`applyAccountCookies` 在清空前先抓取当前 `theme*` cookie(`isThemeCookie()` 判定),写回目标账号后再用它们覆盖,使深/浅色设置跨账号沿用,不跟随各账号快照。`isThemeCookie` 为纯函数,有单元测试。
+
+**已知边界**:此修复假设主题由 cookie 驱动(与实测 cookie dump 一致)。若 bilibili 某些场景改用 localStorage 存主题,则需改用 content script 方案;目前未发现该需求。

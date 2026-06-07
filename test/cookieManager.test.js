@@ -5,6 +5,7 @@ import {
   cookieToSetDetails,
   cookieToRemoveDetails,
   pickStoredFields,
+  isThemeCookie,
 } from "../src/cookieManager.js";
 
 test("buildCookieUrl 对 secure cookie 用 https 并去掉前导点", () => {
@@ -67,4 +68,16 @@ test("pickStoredFields 只保留已知字段", () => {
     Object.keys(c).sort(),
     ["domain","expirationDate","hostOnly","httpOnly","name","path","sameSite","secure","value"]
   );
+});
+
+test("isThemeCookie 识别主题相关 cookie", () => {
+  assert.equal(isThemeCookie("theme_style"), true);
+  assert.equal(isThemeCookie("theme-tip-show"), true);
+  assert.equal(isThemeCookie("THEME_STYLE"), true);
+});
+
+test("isThemeCookie 对非主题 cookie 返回 false", () => {
+  assert.equal(isThemeCookie("SESSDATA"), false);
+  assert.equal(isThemeCookie("DedeUserID"), false);
+  assert.equal(isThemeCookie(undefined), false);
 });
