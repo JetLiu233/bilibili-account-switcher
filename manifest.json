@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Bilibili 账号快捷切换",
+  "version": "0.1.0",
+  "description": "在多个 bilibili 账号之间一键切换",
+  "permissions": ["cookies", "storage"],
+  "host_permissions": ["*://*.bilibili.com/*"],
+  "action": {
+    "default_popup": "src/popup.html",
+    "default_title": "Bilibili 账号切换"
+  }
+}
