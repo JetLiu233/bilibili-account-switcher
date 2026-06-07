@@ -44,6 +44,19 @@ async function reloadBilibiliTabs() {
   }
 }
 
+const LOGIN_URL = "https://passport.bilibili.com/login";
+
+// 打开 B 站登录页:当前标签是 bilibili 就直接导航过去,否则新开一个标签页。
+// 这样即便用户当前没开 bilibili 页面,也一定能落到登录页。
+async function openLoginPage() {
+  const [active] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (active && active.url && /:\/\/[^/]*\bbilibili\.com\//.test(active.url)) {
+    await chrome.tabs.update(active.id, { url: LOGIN_URL });
+  } else {
+    await chrome.tabs.create({ url: LOGIN_URL });
+  }
+}
+
 function renderRow(acc, currentUid) {
   const li = document.createElement("li");
   li.className = "account" + (acc.uid === currentUid ? " active" : "");
@@ -183,8 +196,8 @@ async function confirmAddAccount() {
   clearAddConfirm();
   setStatus("正在清空登录状态…");
   await clearBilibiliCookies();
-  await reloadBilibiliTabs();
-  setStatus("已跳到登录页,登录新账号后点「保存当前账号」");
+  await openLoginPage();
+  setStatus("已打开登录页,登录新账号后回到这里点「保存当前账号」");
   await render();
 }
 

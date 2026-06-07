@@ -155,7 +155,7 @@ nav 接口调用:从弹窗(扩展页面)`fetch("https://api.bilibili.com/x/web-i
 **设计调整**:
 
 - 从 `applyAccountCookies` 抽出 `clearBilibiliCookies()`:只本地删除 `.bilibili.com` 全部 Cookie,绝不调用退出登录接口。切换与添加新账号共用它。
-- 新增「➕ 添加新账号(去登录页)」入口:行内确认 → `clearBilibiliCookies()` → 刷新跳到登录页 → 用户登录新号 → 「保存当前账号」(同 UID 走 upsert 覆盖)。其它已保存账号的服务端会话不受影响。
+- 新增「➕ 添加新账号(去登录页)」入口:行内确认 → `clearBilibiliCookies()` → **主动打开** B 站登录页 `https://passport.bilibili.com/login`(当前标签是 bilibili 则导航该标签,否则新开标签;不依赖用户已开着 bilibili 页面)→ 用户登录新号 → 「保存当前账号」(同 UID 走 upsert 覆盖)。其它已保存账号的服务端会话不受影响。
 - 界面常驻警告 + README 说明:不要点 B 站的"退出登录"。
 
 **不可恢复性**:一旦某账号已被"退出登录"作废,本地无法复活,只能经"添加新账号"流程重新登录、重新保存。
