@@ -6,7 +6,7 @@ export function upsertAccount(accounts, account) {
   const idx = accounts.findIndex((a) => a.uid === account.uid);
   if (idx === -1) return [...accounts, account];
   const next = accounts.slice();
-  next[idx] = { ...next[idx], ...account };
+  next[idx] = account; // 整体替换该 uid 的记录(调用方总是传完整 account)
   return next;
 }
 
