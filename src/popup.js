@@ -2,6 +2,7 @@ import {
   captureCurrentCookies,
   getCurrentUid,
   applyAccountCookies,
+  clearBilibiliCookies,
 } from "./cookieManager.js";
 import {
   loadAccounts,
@@ -14,6 +15,7 @@ import { fetchProfile } from "./bilibiliApi.js";
 
 const listEl = document.getElementById("account-list");
 const statusEl = document.getElementById("status");
+const addConfirmEl = document.getElementById("add-confirm");
 
 // 行内编辑状态
 let editingUid = null;
@@ -158,6 +160,34 @@ async function handleSwitch(uid) {
   await render();
 }
 
+function clearAddConfirm() {
+  addConfirmEl.textContent = "";
+}
+
+// 显示行内确认条:添加新账号会本地清空登录、跳登录页,但不退出登录。
+function handleAddAccount() {
+  clearAddConfirm();
+  const bar = document.createElement("div");
+  bar.className = "confirm-bar";
+  const msg = document.createElement("span");
+  msg.className = "msg";
+  msg.textContent =
+    "将清空当前网页的登录状态并跳到登录页(不会退出登录,已保存的账号不受影响)。继续?";
+  bar.appendChild(msg);
+  bar.appendChild(makeBtn("继续", confirmAddAccount, "go"));
+  bar.appendChild(makeBtn("取消", clearAddConfirm));
+  addConfirmEl.appendChild(bar);
+}
+
+async function confirmAddAccount() {
+  clearAddConfirm();
+  setStatus("正在清空登录状态…");
+  await clearBilibiliCookies();
+  await reloadBilibiliTabs();
+  setStatus("已跳到登录页,登录新账号后点「保存当前账号」");
+  await render();
+}
+
 async function commitRename(uid, value) {
   const name = value.trim();
   if (name === "") {
@@ -178,4 +208,5 @@ async function commitDelete(uid) {
 }
 
 document.getElementById("save-current").addEventListener("click", handleSaveCurrent);
+document.getElementById("add-account").addEventListener("click", handleAddAccount);
 render();

@@ -59,8 +59,10 @@ export async function getCurrentUid() {
   return c ? c.value : null;
 }
 
-export async function applyAccountCookies(savedCookies) {
-  // 1. 删除当前所有 bilibili cookie,避免两个账号混在一起
+// 仅在本地删除 bilibili 的全部 cookie。
+// 关键:这不会调用 bilibili 的退出登录接口,所以服务端会话不会失效,
+// 已保存的其他账号也不受影响。切换、添加新账号都复用它。
+export async function clearBilibiliCookies() {
   const current = await chrome.cookies.getAll({ domain: "bilibili.com" });
   for (const c of current) {
     try {
@@ -69,6 +71,11 @@ export async function applyAccountCookies(savedCookies) {
       // 单条失败不中断
     }
   }
+}
+
+export async function applyAccountCookies(savedCookies) {
+  // 1. 本地清空当前所有 bilibili cookie,避免两个账号混在一起
+  await clearBilibiliCookies();
   // 2. 写回目标账号的 cookie,统计失败数
   let failed = 0;
   for (const c of savedCookies) {

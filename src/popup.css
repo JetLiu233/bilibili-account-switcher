@@ -22,7 +22,36 @@ button.primary {
   padding: 8px;
   font-size: 13px;
 }
+button.secondary {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  font-size: 13px;
+}
 button.danger { color: #e54848; }
+button.go { background: #00aeec; color: #fff; border: none; }
+.warn {
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  background: #fff7e6;
+  border: 1px solid #ffe0a3;
+  border-radius: 4px;
+  color: #8a6d3b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.confirm-bar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #e3e5e7;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.confirm-bar .msg { flex: 1; line-height: 1.4; }
 ul { list-style: none; margin: 0; padding: 0 10px; }
 li.account {
   display: flex;
