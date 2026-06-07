@@ -183,3 +183,10 @@ bilibili 的深/浅色偏好存在 `theme_style`(及 `theme-*` 提示标记)cook
 - 开关:`settingsStore.js` 管理 `settings.keepFeedOnSwitch`,**默认关**(实验性、且会改写页面 DOM)。`withDefaults` 为纯函数,有单元测试。
 
 **已知脆弱点**:抓取与替换都依赖 B 站首页 DOM;B 站改版可能失效。替换后的卡片上播放量/时长等数字仍是原卡片的(只换了链接/标题/封面)。这些是该呈现方式的固有代价。
+
+**v0.2.1 修复**(基于实测 HTML):
+
+- `closest` 必须用**精确类名** `.bili-video-card` / `.bili-feed-card`。先前用 `[class*="video-card"]` 子串匹配会命中 BEM 子元素(`__image--link`、`__info--tit`),使卡片定位到内层元素 → 标题没替换、看起来"没生效"。
+- `collectCards` 同时按 **BV 和卡片元素双重去重**,避免同卡片的封面链接 + 标题链接被收两次。
+- 封面是 `<picture>`,内有 `<source srcset>`(avif/webp)**优先于 `<img>`**;替换封面时必须先删 `<source>`,只改 `img.src` 不显示。
+- 标题在 `<h3 class="bili-video-card__info--tit"><a>…</a></h3>`,替换时保留内层 `<a>`、只改文字。
